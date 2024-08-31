@@ -8,14 +8,31 @@
 import SwiftUI
 
 struct ContentView: View {
+    @State private var showConfirmationAlert = false
+    @State private var backgroundColor = Color.white
+    
     var body: some View {
-        VStack {
-            Image(systemName: "globe")
-                .imageScale(.large)
-                .foregroundStyle(.tint)
-            Text("Hello, world!")
+        VStack{
+            Button("tap me") {
+                showConfirmationAlert.toggle()
+            }
+            .background(.white)
+            .frame(maxWidth: 50, maxHeight: .infinity)
+            .background(backgroundColor)
         }
-        .padding()
+        .frame(width: 100, height: 100)
+        .confirmationDialog("change background", isPresented: $showConfirmationAlert) {
+            Button("Red") {
+                backgroundColor = .red
+            }
+            Button("Green") {
+                backgroundColor = .green
+            }
+            Button("Blue") {
+                backgroundColor = .blue
+            }
+            Button("cance", role: .cancel) {}
+        }
     }
 }
 
