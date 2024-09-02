@@ -7,14 +7,18 @@
 import CoreImage
 import CoreImage.CIFilterBuiltins
 import PhotosUI
+import StoreKit
 import SwiftUI
 
 struct ContentView: View {
     @State private var intensity = 0.5
     @State private var processedImage: Image?
     @State private var selectedImage: PhotosPickerItem?
+    @State private var showFiltersDialogBox = false
+    @AppStorage("filterCount") var filterCount = 0
+    @Environment(\.requestReview) var requestReview
     
-    @State private var currentFilter = CIFilter.sepiaTone()
+    @State private var currentFilter: CIFilter = CIFilter.sepiaTone()
     let context = CIContext()
     
     var body: some View{
@@ -41,18 +45,38 @@ struct ContentView: View {
                 }
                 .padding(.vertical)
                 HStack{
-                   Button("Change Filter", action: changeFilter)
+                    Button("Change Filter"){
+                        showFiltersDialogBox = true
+                    }
                     Spacer()
+                    if let processedImage{
+                        ShareLink(item: processedImage, preview: SharePreview("InstaFilter Image", image: processedImage))
+                    }
                 }
             }
             .padding([.horizontal, .bottom])
             .navigationTitle("InstaFilter")
+            .confirmationDialog("Select Filter", isPresented: $showFiltersDialogBox) {
+                Button("Crystallize") { changeFilter(CIFilter.crystallize()) }
+                Button("Edges") { changeFilter(CIFilter.edges()) }
+                Button("Gaussian Blur") { changeFilter(CIFilter.gaussianBlur()) }
+                Button("Pixellate") { changeFilter(CIFilter.pixellate()) }
+                Button("Sepia Tone") { changeFilter(CIFilter.sepiaTone()) }
+                Button("Unsharp Mask") { changeFilter(CIFilter.unsharpMask()) }
+                Button("Vignette") { changeFilter(CIFilter.vignette()) }
+                Button("Cancel", role: .cancel) { }
+            }
         }
 
     }
     
-    func changeFilter(){
-        // change filter here
+    @MainActor func changeFilter(_ filter: CIFilter){
+        currentFilter = filter
+        loadImage()
+        filterCount += 1
+        if filterCount > 20{
+            requestReview()
+        }
     }
     
     func loadImage(){
@@ -67,8 +91,17 @@ struct ContentView: View {
     }
     
     func applyProcessing(){
-        currentFilter.intensity = Float(intensity)
+        let inputKeys = currentFilter.inputKeys
         
+        if inputKeys.contains(kCIInputIntensityKey){
+            currentFilter.setValue(intensity, forKey: kCIInputIntensityKey)
+        }
+        if inputKeys.contains(kCIInputRadiusKey){
+            currentFilter.setValue(intensity * 200, forKey: kCIInputRadiusKey)
+        }
+        if inputKeys.contains(kCIInputScaleKey){
+            currentFilter.setValue(intensity * 10, forKey: kCIInputScaleKey)
+        }
         guard let outputImage = currentFilter.outputImage else { return }
         guard let cgImage = context.createCGImage(outputImage, from: outputImage.extent) else { return }
         
