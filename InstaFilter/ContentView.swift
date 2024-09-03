@@ -12,6 +12,8 @@ import SwiftUI
 
 struct ContentView: View {
     @State private var intensity = 0.5
+    @State private var radius = 0.5
+    @State private var scale = 0.5
     @State private var processedImage: Image?
     @State private var selectedImage: PhotosPickerItem?
     @State private var showFiltersDialogBox = false
@@ -42,12 +44,32 @@ struct ContentView: View {
                     Text("Intensity")
                     Slider(value: $intensity)
                         .onChange(of: intensity, applyProcessing)
+                        .disabled(processedImage == nil)
                 }
                 .padding(.vertical)
+                
+                HStack{
+                    Text("Radius")
+                    Slider(value: $radius)
+                        .onChange(of: radius, applyProcessing)
+                        .disabled(processedImage == nil)
+                }
+                .padding(.vertical)
+                
+                HStack{
+                    Text("Scale")
+                    Slider(value: $scale)
+                        .onChange(of: scale, applyProcessing)
+                        .disabled(processedImage == nil)
+                }
+                .padding(.vertical)
+                
                 HStack{
                     Button("Change Filter"){
                         showFiltersDialogBox = true
                     }
+                    .disabled(processedImage == nil)
+                    
                     Spacer()
                     if let processedImage{
                         ShareLink(item: processedImage, preview: SharePreview("InstaFilter Image", image: processedImage))
@@ -97,10 +119,10 @@ struct ContentView: View {
             currentFilter.setValue(intensity, forKey: kCIInputIntensityKey)
         }
         if inputKeys.contains(kCIInputRadiusKey){
-            currentFilter.setValue(intensity * 200, forKey: kCIInputRadiusKey)
+            currentFilter.setValue(radius * 200, forKey: kCIInputRadiusKey)
         }
         if inputKeys.contains(kCIInputScaleKey){
-            currentFilter.setValue(intensity * 10, forKey: kCIInputScaleKey)
+            currentFilter.setValue(scale * 10, forKey: kCIInputScaleKey)
         }
         guard let outputImage = currentFilter.outputImage else { return }
         guard let cgImage = context.createCGImage(outputImage, from: outputImage.extent) else { return }
